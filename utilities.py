@@ -109,10 +109,11 @@ def load_omniglot(num_omniglot):
 
 def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5'):
     """
-    Download MNIST and OMNIGLOT data and concatenate OMNIGLOT images to MNIST evaluation images.
 
+    :param test_size:
+    :param omniglot_bool:
+    :param name_data_set:
     :return:
-    hdf5 file containing data sets
     """
     if omniglot_bool and (test_size > 10000 or test_size < 1):
         raise ValueError("Size of test set must be between 0 and 10000 when using Omniglot.")
