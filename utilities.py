@@ -155,6 +155,9 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         extend_labels = np.array([[0] * train_labels.shape[0]])
         train_labels = np.append(train_labels, extend_labels.T, axis=1)
         train_labels = np.int32(train_labels)
+        extend_labels = np.array([[0] * val_labels.shape[0]])
+        val_labels = np.append(val_labels, extend_labels.T, axis=1)
+        val_labels = np.int32(val_labels)
 
         test_data = np.concatenate((test_data, im_omni), axis=0)
 
