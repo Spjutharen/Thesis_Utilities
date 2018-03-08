@@ -42,7 +42,7 @@ def download_and_load_mnist(test_size=10000, r_seed=None):
 
 def download_omniglot(target_dir):
     """
-    Download Omniglot alphabets.
+    Download Omniglot alphabets from https://github.com/brendenlake/omniglot/.
 
     :param target_dir: target directory of download.
     :return: Nothing. The function only saves the files to target directory.
@@ -58,12 +58,12 @@ def download_omniglot(target_dir):
         "raw/master/python/images_background.zip"
     )
     if not os.path.isdir(target_dir + 'images_evaluation'):
-        print("Downloading omniglot part 1(2) from github/brendenlake/omniglot")
+        print("Downloading omniglot part 1(2).")
         urllib.request.urlretrieve(origin_eval, target_dir + 'images_evaluation.zip')
         with zipfile.ZipFile(target_dir + "images_evaluation.zip", "r") as zRef:
             zRef.extractall(target_dir)
     if not os.path.isdir(target_dir + 'images_background'):
-        print("Downloading omniglot part 2(2) from github/brendenlake/omniglot")
+        print("Downloading omniglot part 2(2).")
         urllib.request.urlretrieve(origin_back, target_dir + 'images_background.zip')
         with zipfile.ZipFile(target_dir + "images_background.zip", "r") as zRef:
             zRef.extractall(target_dir)
@@ -152,8 +152,14 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         test_labels = np.append(test_labels, extend_labels.T, axis=1)
         test_labels = np.concatenate((test_labels, labels_omni), axis=0)
         test_labels = np.int32(test_labels)
+        extend_labels = np.array([[0] * train_labels.shape[0]])
+        train_labels = np.append(train_labels, extend_labels.T, axis=1)
+        train_labels = np.int32(train_labels)
 
         test_data = np.concatenate((test_data, im_omni), axis=0)
+
+        # Delete Omniglot files
+        rmtree("OMNIGLOT_data/")
 
     # Save dataset to hdf5 filetype if wanted.
     if create_file:
@@ -166,9 +172,8 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         f.create_dataset("test_labels", data=test_labels)
         f.close()
 
-    # Remove downloaded files.
+    # Remove MNIST files.
     rmtree("MNIST_data/")
-    rmtree("OMNIGLOT_data/")
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
@@ -188,11 +193,13 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
     """
     if os.path.isfile(name_data_set) and force:
         # Remove file and create new.
+        print("Removing existing file {} and creates + loads new.".format(name_data_set))
         os.remove(name_data_set)
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
             create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
     elif os.path.isfile(name_data_set) and not force:
         # Load file.
+        print("Loading existing file {}.".format(name_data_set))
         f = h5py.File(name_data_set, 'r')
         train_data = f['train_data'][:]
         train_labels = f['train_labels'][:]
@@ -200,8 +207,11 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
         val_labels = f['val_labels'][:]
         test_data = f['test_data'][:]
         test_labels = f['test_labels'][:]
+        if len(train_labels[0]) == 10:
+            print('{} :OBS: Loaded file not including Omniglot images :OBS: {}'.format(('='*20), ('='*20)))
         f.close()
     else:
+        print("Creating and loading new file.")
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
             create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
 
