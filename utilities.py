@@ -134,7 +134,7 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         raise ValueError("Size of test set must be between 0 and 10000.")
 
     # Gather MNIST data.
-    train_data, train_labels, eval_data, eval_labels = download_and_load_mnist(test_size, r_seed)
+    train_data, train_labels, test_data, test_labels = download_and_load_mnist(test_size, r_seed)
 
     # Divide into training and validation sets.
     train_data = train_data[:np.int(per_train*len(train_data))]
@@ -148,12 +148,12 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         im_omni, labels_omni = load_omniglot(test_size, r_seed)
 
         # Extending data and label sets to include Omniglot.
-        extend_labels = np.array([[0] * eval_labels.shape[0]])
-        eval_labels = np.append(eval_labels, extend_labels.T, axis=1)
-        eval_labels = np.concatenate((eval_labels, labels_omni), axis=0)
-        eval_labels = np.int32(eval_labels)
+        extend_labels = np.array([[0] * test_labels.shape[0]])
+        test_labels = np.append(test_labels, extend_labels.T, axis=1)
+        test_labels = np.concatenate((test_labels, labels_omni), axis=0)
+        test_labels = np.int32(test_labels)
 
-        eval_data = np.concatenate((eval_data, im_omni), axis=0)
+        test_data = np.concatenate((test_data, im_omni), axis=0)
 
     # Save dataset to hdf5 filetype if wanted.
     if create_file:
@@ -162,15 +162,15 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         f.create_dataset("train_labels", data=train_labels)
         f.create_dataset("val_data", data=val_data)
         f.create_dataset("val_labels", data=val_labels)
-        f.create_dataset("test_data", data=eval_data)
-        f.create_dataset("test_labels", data=eval_labels)
+        f.create_dataset("test_data", data=test_data)
+        f.create_dataset("test_labels", data=test_labels)
         f.close()
 
     # Remove downloaded files.
     rmtree("MNIST_data/")
     rmtree("OMNIGLOT_data/")
 
-    return train_data, train_labels, val_data, val_labels, eval_data, eval_labels
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', force=False, per_train=0.9, create_file=True, r_seed=None):
@@ -193,13 +193,13 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
             create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
     elif os.path.isfile(name_data_set) and not force:
         # Load file.
-        f = h5py.File('mytestfile.hdf5', 'r')
-        train_data = f['train_data']
-        train_labels = f['train_labels']
-        val_data = f['val_data']
-        val_labels = f['val_labels']
-        test_data = f['test_data']
-        test_labels = f['test_labels']
+        f = h5py.File(name_data_set, 'r')
+        train_data = f['train_data'][:]
+        train_labels = f['train_labels'][:]
+        val_data = f['val_data'][:]
+        val_labels = f['val_labels'][:]
+        test_data = f['test_data'][:]
+        test_labels = f['test_labels'][:]
         f.close()
     else:
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
