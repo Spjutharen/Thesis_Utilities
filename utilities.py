@@ -75,7 +75,7 @@ def load_omniglot(num_omniglot, r_seed=None):
 
     :param num_omniglot: number of images to be returned. Same as size of MNIST test set.
     :param r_seed: random seed if reproducable sets is wanted.
-    :return: Omniglot images with one-hot encoded labels. All Omniglot images are given label 11.
+    :return: Omniglot images with one-hot encoded labels. All Omniglot label sets are all-zeroed.
     """
     folder = "OMNIGLOT_data/"
 
@@ -111,9 +111,8 @@ def load_omniglot(num_omniglot, r_seed=None):
         im_omni[i] = load_image(images[i])
     im_omni = np.asarray(im_omni, dtype=np.float32)
 
-    # Create one-hot encoded label set.
-    values = np.array([10] * num_omniglot)
-    labels_omni = np.eye(11)[values]
+    # Create one-hot encoded label set. Basically zero-matrix.
+    labels_omni = np.zeros((num_omniglot,10), dtype=np.int32)
 
     return im_omni, labels_omni
 
@@ -147,21 +146,11 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         # Gather OMNIGLOT data
         im_omni, labels_omni = load_omniglot(test_size, r_seed)
 
-        # Extending data and label sets to include Omniglot.
-        extend_labels = np.array([[0] * test_labels.shape[0]])
-        test_labels = np.append(test_labels, extend_labels.T, axis=1)
+        # Extending data and label sets with Omniglot.
         test_labels = np.concatenate((test_labels, labels_omni), axis=0)
-        test_labels = np.int32(test_labels)
-        extend_labels = np.array([[0] * train_labels.shape[0]])
-        train_labels = np.append(train_labels, extend_labels.T, axis=1)
-        train_labels = np.int32(train_labels)
-        extend_labels = np.array([[0] * val_labels.shape[0]])
-        val_labels = np.append(val_labels, extend_labels.T, axis=1)
-        val_labels = np.int32(val_labels)
-
         test_data = np.concatenate((test_data, im_omni), axis=0)
 
-        # Delete Omniglot files
+        # Remove Omniglot files
         rmtree("OMNIGLOT_data/")
 
     # Save dataset to hdf5 filetype if wanted.
@@ -196,13 +185,13 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
     """
     if os.path.isfile(name_data_set) and force:
         # Remove file and create new.
-        print("Removing existing file {} and creates + loads new.".format(name_data_set))
+        print("Removing existing file '{}' and creates + loads new.".format(name_data_set))
         os.remove(name_data_set)
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
             create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
     elif os.path.isfile(name_data_set) and not force:
         # Load file.
-        print("Loading existing file {}.".format(name_data_set))
+        print("Loading existing file '{}'.".format(name_data_set))
         f = h5py.File(name_data_set, 'r')
         train_data = f['train_data'][:]
         train_labels = f['train_labels'][:]
@@ -210,11 +199,11 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
         val_labels = f['val_labels'][:]
         test_data = f['test_data'][:]
         test_labels = f['test_labels'][:]
-        if len(train_labels[0]) == 10:
+        if test_labels[-1] != 0:
             print('{} :OBS: Loaded file not including Omniglot images :OBS: {}'.format(('='*20), ('='*20)))
         f.close()
     else:
-        print("Creating and loading new file.")
+        print("Creating and loading new file '{}'.".format(name_data_set))
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
             create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
 
