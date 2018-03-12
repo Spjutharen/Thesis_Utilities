@@ -8,6 +8,9 @@ import h5py
 from tensorflow.examples.tutorials.mnist import input_data
 from shutil import rmtree
 
+# Todo: If we have an supervisor that requires training on Mnist and Omniglott, option to include Omniglott in training data should exist.
+# Todo: Adversarial examples.
+# TODO: comment format, skulle vi inte använda numpy-formatet??
 
 def download_and_load_mnist(test_size=10000, r_seed=None):
     """
@@ -19,12 +22,14 @@ def download_and_load_mnist(test_size=10000, r_seed=None):
     """
 
     # Download MNIST from Tensorflow and assign to variables.
-    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False)
+    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False) # TODO: Seed ligger fel, måste använder här också.
 
     train_data = mnist.train.images
     train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
     test_data = mnist.test.images
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
+
+    # TODO: Not using any of the validation data??, better - load all in single array and then split between test, val and train.
 
     # Shuffle data (with seed if given).
     if r_seed:
@@ -37,7 +42,7 @@ def download_and_load_mnist(test_size=10000, r_seed=None):
     test_data = test_data[idx]
     test_labels = test_labels[idx]
 
-    return train_data, train_labels, test_data[:test_size], test_labels[:test_size]
+    return train_data, train_labels, test_data[:test_size], test_labels[:test_size] # TODO: If test_size < 10000 we're throwing away data??
 
 
 def download_omniglot(target_dir):
@@ -98,7 +103,7 @@ def load_omniglot(num_omniglot, r_seed=None):
         """
         image = imread(in_image, flatten=False)
         image = imresize(image, (28, 28), interp='bicubic')
-        image = (np.abs(image - 255.)/255.)
+        image = (np.abs(image - 255.)/255.) # TODO: Not how you scale between 0-1
         image = image[:,:,np.newaxis]
         return image
 
@@ -130,7 +135,7 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
     :return: Variables containing training, validation and test data with labels.
     """
     if test_size > 10000 or test_size < 1:
-        raise ValueError("Size of test set must be between 0 and 10000.")
+        raise ValueError("Size of test set must be between 0 and 10000.") # TODO: Varför? Det finns ju 32k Omniglott?
 
     # Gather MNIST data.
     train_data, train_labels, test_data, test_labels = download_and_load_mnist(test_size, r_seed)
