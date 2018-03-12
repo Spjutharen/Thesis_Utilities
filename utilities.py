@@ -12,7 +12,7 @@ from shutil import rmtree
 # Todo: Adversarial examples.
 # TODO: comment format, skulle vi inte använda numpy-formatet??
 
-def download_and_load_mnist(test_size=10000, r_seed=None):
+def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
     """
     Downloads and shuffles MNIST images.
 
@@ -21,19 +21,17 @@ def download_and_load_mnist(test_size=10000, r_seed=None):
     :return: training data with labels and test data with labels.
     """
 
+    # Shuffle data (with seed if given).
+    if r_seed:
+        random.seed(r_seed)
+
     # Download MNIST from Tensorflow and assign to variables.
-    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False) # TODO: Seed ligger fel, måste använder här också.
+    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False, seed=r_seed, validation_size=val_size)
 
     train_data = mnist.train.images
     train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
     test_data = mnist.test.images
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
-
-    # TODO: Not using any of the validation data??, better - load all in single array and then split between test, val and train.
-
-    # Shuffle data (with seed if given).
-    if r_seed:
-        random.seed(r_seed)
 
     idx = np.random.permutation(len(train_data))
     train_data = train_data[idx]
@@ -103,7 +101,7 @@ def load_omniglot(num_omniglot, r_seed=None):
         """
         image = imread(in_image, flatten=False)
         image = imresize(image, (28, 28), interp='bicubic')
-        image = (np.abs(image - 255.)/255.) # TODO: Not how you scale between 0-1
+        image = (np.abs(image - 255.)/255.)
         image = image[:,:,np.newaxis]
         return image
 
