@@ -10,37 +10,38 @@ from shutil import rmtree
 
 # Todo: If we have an supervisor that requires training on Mnist and Omniglott, option to include Omniglott in training data should exist.
 # Todo: Adversarial examples.
-# TODO: comment format, skulle vi inte använda numpy-formatet??
+
 
 def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
     """
     Downloads and shuffles MNIST images.
 
     :param test_size: chosen size of test set.
+    :param val_size: chosen size of validation set.
     :param r_seed: random seed if reproducable sets is wanted.
     :return: training data with labels and test data with labels.
     """
 
-    # Shuffle data (with seed if given).
-    if r_seed:
-        random.seed(r_seed)
-
     # Download MNIST from Tensorflow and assign to variables.
-    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False, seed=r_seed, validation_size=val_size)
+    mnist = input_data.read_data_sets("MNIST_data/", one_hot=True, reshape=False, seed=r_seed, validation_size=0)
 
-    train_data = mnist.train.images
-    train_labels = np.asarray(mnist.train.labels, dtype=np.int32)
+    train_val_data = mnist.train.images
+    train_val_labels = np.asarray(mnist.train.labels, dtype=np.int32)
     test_data = mnist.test.images
     test_labels = np.asarray(mnist.test.labels, dtype=np.int32)
 
-    idx = np.random.permutation(len(train_data))
-    train_data = train_data[idx]
-    train_labels = train_labels[idx]
-    idx = np.random.permutation(len(test_data))
-    test_data = test_data[idx]
-    test_labels = test_labels[idx]
+    mass = np.concatenate((train_val_data, test_data), axis=0)
+    mass_labels = np.concatenate((train_val_labels, test_labels), axis=0)
 
-    return train_data, train_labels, test_data[:test_size], test_labels[:test_size] # TODO: If test_size < 10000 we're throwing away data??
+    # Divide into training, validation and test sets.
+    test_data = mass[:test_size]
+    test_labels = mass_labels[:test_size]
+    val_data = mass[test_size:test_size+val_size]
+    val_labels = mass_labels[test_size:test_size+val_size]
+    train_data = mass[test_size+val_size:]
+    train_labels = mass[test_size+val_size:]
+
+    return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
 def download_omniglot(target_dir):
@@ -115,34 +116,29 @@ def load_omniglot(num_omniglot, r_seed=None):
     im_omni = np.asarray(im_omni, dtype=np.float32)
 
     # Create one-hot encoded label set. Basically zero-matrix.
-    labels_omni = np.zeros((num_omniglot,10), dtype=np.int32)
+    labels_omni = np.zeros((num_omniglot, 11), dtype=np.int32)
+    labels_omni[:, 10] = 1
 
     return im_omni, labels_omni
 
 
-def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5', per_train=0.9, create_file=True, r_seed=None):
+def create_dataset(test_size=10000, val_size=5000, omniglot_bool=True, name_data_set='data.h5',
+                   create_file=True, r_seed=None):
     """
     Creates a shuffled dataset consisting of MNIST and Omniglot (if chosen) images. Saves to a file if chosen.
 
-    :param test_size: Number of Omniglot images to be used for test set. Bounded to be max 50% of test set.
+    :param test_size: Number of images taken from MNIST and Omniglot each, for the test data.
+    :param val_size: Number of images for the MNIST validation set.
     :param omniglot_bool: Boolean deciding if Omniglot should be used or not.
     :param name_data_set: Name of saved file.
-    :param per_train: Percent of train_data that should be used for training. Remaining is used as validation set.
     :param create_file: Boolean deciding if a file should be created or not.
     :param r_seed: Random seed if reproducable sets is wanted.
     :return: Variables containing training, validation and test data with labels.
     """
-    if test_size > 10000 or test_size < 1:
-        raise ValueError("Size of test set must be between 0 and 10000.") # TODO: Varför? Det finns ju 32k Omniglott?
 
     # Gather MNIST data.
-    train_data, train_labels, test_data, test_labels = download_and_load_mnist(test_size, r_seed)
-
-    # Divide into training and validation sets.
-    train_data = train_data[:np.int(per_train*len(train_data))]
-    train_labels = train_labels[:np.int(per_train*len(train_labels))]
-    val_data = train_data[np.int(per_train*len(train_data)):]
-    val_labels = train_labels[np.int(per_train*len(train_labels)):]
+    train_data, train_labels, val_data, val_labels, test_data, test_labels = \
+        download_and_load_mnist(test_size, val_size, r_seed)
 
     # Setup datasets and labels depending on OMNIGLOT dataset
     if omniglot_bool:
@@ -150,6 +146,8 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
         im_omni, labels_omni = load_omniglot(test_size, r_seed)
 
         # Extending data and label sets with Omniglot.
+        extend = np.array([np.zeros(test_size)], dtype=np.int32)
+        test_labels = np.concatenate((test_labels, extend.T), axis=1)
         test_labels = np.concatenate((test_labels, labels_omni), axis=0)
         test_data = np.concatenate((test_data, im_omni), axis=0)
 
@@ -173,15 +171,16 @@ def create_dataset(test_size=10000, omniglot_bool=True, name_data_set='data.h5',
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
-def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', force=False, per_train=0.9, create_file=True, r_seed=None):
+def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_set='data.h5',
+                  force=False, create_file=True, r_seed=None):
     """
     Loads training, validation and test sets with labels.
 
     :param test_size: Number of Omniglot images to be used for test set. Bounded to be max 50% of test set.
+    :param val_size: Number of images for the MNIST validation set.
     :param omniglot_bool: Boolean deciding if Omniglot should be used or not.
     :param name_data_set: Name of saved file.
     :param force: Boolean which decides if existing file should be deleted and a new one created.
-    :param per_train: Percent of train_data that should be used for training. Remaining is used as validation set.
     :param create_file: Boolean deciding if a file should be created or not.
     :param r_seed: Random seed if reproducable sets is wanted.
     :return: Variables containing training, validation and test data with labels.
@@ -191,7 +190,7 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
         print("Removing existing file '{}' and creates + loads new.".format(name_data_set))
         os.remove(name_data_set)
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
-            create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
+            create_dataset(test_size, val_size, omniglot_bool, name_data_set, create_file, r_seed)
     elif os.path.isfile(name_data_set) and not force:
         # Load file.
         print("Loading existing file '{}'.".format(name_data_set))
@@ -202,12 +201,15 @@ def load_datasets(test_size=10000, omniglot_bool=True, name_data_set='data.h5', 
         val_labels = f['val_labels'][:]
         test_data = f['test_data'][:]
         test_labels = f['test_labels'][:]
-        if test_labels[-1] != 0:
-            print('{} :OBS: Loaded file not including Omniglot images :OBS: {}'.format(('='*20), ('='*20)))
+        if test_labels.shape[1] == 10:
+            print('{} :OBS: Loaded file not containing Omniglot images :OBS: {}'.format(('='*10), ('='*10)))
+        else:
+            print('{} :OBS: Loaded file contains {} Omniglot images :OBS: {}'.format(('='*10),
+                                                                                     len(test_labels/2), ('='*10)))
         f.close()
     else:
         print("Creating and loading new file '{}'.".format(name_data_set))
         train_data, train_labels, val_data, val_labels, test_data, test_labels = \
-            create_dataset(test_size, omniglot_bool, name_data_set, per_train, create_file, r_seed)
+            create_dataset(test_size, val_size, omniglot_bool, name_data_set, create_file, r_seed)
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
