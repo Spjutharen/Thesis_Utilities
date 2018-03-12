@@ -213,3 +213,29 @@ def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_
             create_dataset(test_size, val_size, omniglot_bool, name_data_set, create_file, r_seed)
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
+
+def load_confusion_matrix(predictions, labels):
+    """
+    Builds confusion matrices.
+
+    :param predictions: Predicted labels for test set.
+    :param labels: True labels for test set.
+    :return: One full confusion matrix and one showing if MNIST or Omniglot.
+    """
+
+    # Reverse one-hot encoding of y_test labels
+    _, labels = np.where(labels == 1)
+
+    # Full matrix
+    matrix1 = np.zeros((len(labels), len(labels)))
+    for a, p in zip(labels, predictions):
+        matrix1[a][p] += 1
+
+    # MNIST-or-not matrix.
+    matrix2 = np.zeros(2, 2)
+    matrix2[0, 0] = np.sum(matrix1[:9, :9])
+    matrix2[0, 1] = np.sum(matrix1[:10, 10])
+    matrix2[1, 0] = np.sum(matrix1[10, :10])
+    matrix2[1, 1] = matrix1[10, 10]
+
+    return matrix1, matrix2
