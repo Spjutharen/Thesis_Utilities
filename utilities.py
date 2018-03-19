@@ -39,7 +39,7 @@ def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
     val_data = mass[test_size:test_size+val_size]
     val_labels = mass_labels[test_size:test_size+val_size]
     train_data = mass[test_size+val_size:]
-    train_labels = mass[test_size+val_size:]
+    train_labels = mass_labels[test_size+val_size:]
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
@@ -205,7 +205,7 @@ def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_
             print('{} :OBS: Loaded file not containing Omniglot images :OBS: {}'.format(('='*10), ('='*10)))
         else:
             print('{} :OBS: Loaded file contains {} Omniglot images :OBS: {}'.format(('='*10),
-                                                                                     len(test_labels/2), ('='*10)))
+                                                                                     len(test_labels)/2, ('='*10)))
         f.close()
     else:
         print("Creating and loading new file '{}'.".format(name_data_set))
@@ -213,6 +213,7 @@ def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_
             create_dataset(test_size, val_size, omniglot_bool, name_data_set, create_file, r_seed)
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
+
 
 def load_confusion_matrix(predictions, labels):
     """
@@ -227,15 +228,15 @@ def load_confusion_matrix(predictions, labels):
     _, labels = np.where(labels == 1)
 
     # Full matrix
-    matrix1 = np.zeros((len(labels), len(labels)))
+    matrix1 = np.zeros((11, 11))
     for a, p in zip(labels, predictions):
-        matrix1[a][p] += 1
+        matrix1[a][p] += np.int32(1)
 
     # MNIST-or-not matrix.
-    matrix2 = np.zeros(2, 2)
-    matrix2[0, 0] = np.sum(matrix1[:9, :9])
-    matrix2[0, 1] = np.sum(matrix1[:10, 10])
-    matrix2[1, 0] = np.sum(matrix1[10, :10])
-    matrix2[1, 1] = matrix1[10, 10]
+    matrix2 = np.zeros((2, 2))
+    matrix2[0, 0] = np.sum(matrix1[:10, :10], dtype=np.int)
+    matrix2[0, 1] = np.sum(matrix1[:10, 10], dtype=np.int)
+    matrix2[1, 0] = np.sum(matrix1[10, :10], dtype=np.int)
+    matrix2[1, 1] = np.int(matrix1[10, 10])
 
     return matrix1, matrix2
