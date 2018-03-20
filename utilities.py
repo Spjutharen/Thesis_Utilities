@@ -9,7 +9,6 @@ from tensorflow.examples.tutorials.mnist import input_data
 from shutil import rmtree
 
 # Todo: If we have an supervisor that requires training on Mnist and Omniglott, option to include Omniglott in training data should exist.
-# Todo: Adversarial examples.
 
 
 def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
@@ -44,7 +43,7 @@ def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
 
-def download_omniglot(target_dir):
+def download_omniglot(target_dir = 'OMNIGLOT_data/'):
     """
     Download Omniglot alphabets from https://github.com/brendenlake/omniglot/.
 
@@ -71,6 +70,68 @@ def download_omniglot(target_dir):
         urllib.request.urlretrieve(origin_back, target_dir + 'images_background.zip')
         with zipfile.ZipFile(target_dir + "images_background.zip", "r") as zRef:
             zRef.extractall(target_dir)
+
+    # Remove Omniglot images too similar to Mnist
+    remove_letters_1 = {"Anglo-Saxon_Futhorc": [11, 21],
+                      "Arcadian": [1, 12],
+                      "Armenian": [6, 10, 12, 14, 19, 21, 23, 27, 33, 34, 37, 40],
+                      "Asomtavruli_(Georgian)": [5, 6, 10, 16, 18, 23, 24, 25, 29, 35, 40],
+                      "Balinese": [5],
+                      "Bengali": [10],
+                      "Blackfoot_(Canadian_Aboriginal_Syllabics)": [7, 8, 9, 10, 11, 12, 13, 14],
+                      "Burmese_(Myanmar)": [6, 11, 13, 19, 20, 30],
+                      "Cyrillic": [2, 9, 16, 24, 25, 28, 30],
+                      "Early_Aramaic": [2, 3, 4, 6, 10, 12, 14, 16, 17, 20],
+                      "Futurama": [14],
+                      "Grantha": [5, 24, 36],
+                      "Greek": [9, 15],
+                      "Gujarati": [19, 25, 26, 27, 39, 41],
+                      "Hebrew": [4, 6, 10, 12, 15, 20],
+                      "Japanese_(hiragana)": [39],
+                      "Korean": [1, 5, 10, 12, 21, 22, 27, 33, 37],
+                      "Latin": [2, 7, 9, 12, 15, 17, 19, 26],
+                      "Malay_(Jawi_-_Arabic)": [1, 29, 36, 37, 38],
+                      "Mkhedruli_(Georgian)": [11, 14, 17, 22, 30, 37, 40],
+                      "N_Ko": [1, 2, 9, 11, 12, 14, 21, 22, 26, 27, 33],
+                      "Ojibwe_(Canadian_Aboriginal_Syllabics)": [4, 5, 6, 10, 12],
+                      "Sanskrit": [21, 26],
+                      "Syriac_(Estrangelo)": [7, 12, 19, 21],
+                      "Tagalog": [3],
+                      "Tifinagh": [1, 32, 34, 37, 42, ]}
+
+    remove_letters_2 = {"Angelic": [14, 19],
+                        "Atemayar_Qelisayer": [1, 5, 9, 16],
+                        "Aurek-Besh": [4, 9, 15, 18],
+                        "Avesta": [2, 4, 9, 11, 13, 15, 18, 21, 26],
+                        "Ge_ez": [16, 20],
+                        "Glagolitic": [6, 20, 21, 45],
+                        "Gurmukhi": [18, 26, 30, 35],
+                        "Malayalam": [15, 25],
+                        "Manipuri": [22, 26, 27, 34],
+                        "Mongolian": [6, 8, 9, 12, 13, 14],
+                        "Old_Church_Slavonic_(Cyrillic)": [2, 9, 12, 17, 23, 27, 28],
+                        "Oriya": [24],
+                        "Syriac_(Serto)": [6],
+                        "Tengwar": [1, 13],
+                        "Tibetan": [15],
+                        "ULOG": [9]}
+
+    # Check if folders been tampered with. Else remove.
+    if os.path.isfile(target_dir + 'images_background/Anglo-Saxon_Futhorc/character11'):
+        for alphabet in remove_letters_1:
+            for letter in remove_letters_1[alphabet]:
+                if letter < 10:
+                    letter = '0' + str(letter)
+                    rmtree(target_dir + 'images_background/' + alphabet + '/character' + letter)
+                else:
+                    rmtree(target_dir + 'images_background/' + alphabet + '/character' + str(letter))
+        for alphabet in remove_letters_2:
+            for letter in remove_letters_1[alphabet]:
+                if letter < 10:
+                    letter = '0' + str(letter)
+                    rmtree(target_dir + 'images_evaluation/' + alphabet + '/character' + letter)
+                else:
+                    rmtree(target_dir + 'images_evaluation/' + alphabet + '/character' + str(letter))
 
 
 def load_omniglot(num_omniglot, r_seed=None):
