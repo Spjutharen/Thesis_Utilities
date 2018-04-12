@@ -284,6 +284,7 @@ def load_confusion_matrix(predictions, labels):
     :param labels: True labels for test set.
     :return: One full confusion matrix and one showing if MNIST or Omniglot.
     """
+    predictions = np.asarray(predictions, dtype=np.int)
 
     # Reverse one-hot encoding of y_test labels
     _, labels = np.where(labels == 1)
@@ -291,7 +292,7 @@ def load_confusion_matrix(predictions, labels):
     # Full matrix
     matrix1 = np.zeros((11, 11))
     for a, p in zip(labels, predictions):
-        matrix1[a][p] += np.int32(1)
+        matrix1[a][p] = np.add(np.int(1), matrix1[a][p])
 
     # MNIST-or-not matrix.
     matrix2 = np.zeros((2, 2))
@@ -300,4 +301,4 @@ def load_confusion_matrix(predictions, labels):
     matrix2[1, 0] = np.sum(matrix1[10, :10], dtype=np.int)
     matrix2[1, 1] = np.int(matrix1[10, 10])
 
-    return matrix1, matrix2
+    return matrix2
