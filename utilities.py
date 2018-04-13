@@ -8,8 +8,6 @@ import h5py
 from tensorflow.examples.tutorials.mnist import input_data
 from shutil import rmtree
 
-# Todo: If we have an supervisor that requires training on Mnist and Omniglott, option to include Omniglott in training data should exist.
-
 
 def download_and_load_mnist(test_size=10000, val_size=5000, r_seed=None):
     """
