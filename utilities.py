@@ -273,6 +273,31 @@ def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
+def load_file(file):
+    """
+    Returns the values and names of content in file
+
+    :param path: String
+        Path to file
+    :return values: tuple
+        The values from file
+    :return keys: list
+        The corresponding names to content of values
+    """
+    try:
+        print("Loading existing file '{}'.".format(file))
+        f = h5py.File(file, 'r')
+        values = list()
+        keys = list()
+        for k in f.keys():
+            values.append(f[k][:])
+            keys.append(k)
+        f.close()
+        values = tuple(values)
+        return values, keys
+    except:
+        print(f'The following file does not exist: {file}')
+
 
 def load_confusion_matrix(predictions, labels):
     """
