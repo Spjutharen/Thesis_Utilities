@@ -273,14 +273,16 @@ def load_datasets(test_size=10000, val_size=5000, omniglot_bool=True, name_data_
 
     return train_data, train_labels, val_data, val_labels, test_data, test_labels
 
-def load_file(file):
+def load_file(file, key=None):
     """
     Returns the values and names of content in file
 
     :param path: String
         Path to file
+    :param key: String
+        Key of one specific data in file
     :return values: tuple
-        The values from file
+        The values from file and value of key if not None
     :return keys: list
         The corresponding names to content of values
     """
@@ -294,7 +296,15 @@ def load_file(file):
             keys.append(k)
         f.close()
         values = tuple(values)
-        return values, keys
+        if key != None:
+            try:
+                i = keys.index(key)
+                print(i)
+                return values[i], keys
+            except:
+                print(f'Could not find {key} in file: {file}')
+        else:
+            return values, keys
     except:
         print(f'The following file does not exist: {file}')
 
