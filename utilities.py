@@ -279,12 +279,12 @@ def load_file(file, key=None):
 
     :param path: String
         Path to file
-    :param key: String
-        Key of one specific data in file
+    :param key: List
+        Key of specific data in file
     :return values: tuple
-        The values from file and value of key if not None
+        The values from file and values of key if not None
     :return keys: list
-        The corresponding names to content of values
+        The keys in the file
     """
     try:
         print("Loading existing file '{}'.".format(file))
@@ -298,9 +298,12 @@ def load_file(file, key=None):
         values = tuple(values)
         if key != None:
             try:
-                i = keys.index(key)
-                print(i)
-                return values[i], keys
+                i = list()
+                for k in (key):
+                    i.append(keys.index(k))
+                    print(i)
+                values = tuple([values[index] for index in i])
+                return values, keys
             except:
                 print(f'Could not find {key} in file: {file}')
         else:
