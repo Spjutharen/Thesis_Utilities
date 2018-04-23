@@ -292,7 +292,10 @@ def load_file(file, key=None):
         values = list()
         keys = list()
         for k in f.keys():
-            values.append(f[k][:])
+            if f[k].size == 1:
+                values.append(f[k].value)
+            else:
+                values.append(f[k][:])
             keys.append(k)
         f.close()
         values = tuple(values)
@@ -301,15 +304,14 @@ def load_file(file, key=None):
                 i = list()
                 for k in (key):
                     i.append(keys.index(k))
-                    print(i)
                 values = tuple([values[index] for index in i])
                 return values, keys
             except:
-                print(f'Could not find {key} in file: {file}')
+                print('Could not find {0} in file: {1}'.format(key,file))
         else:
             return values, keys
     except:
-        print(f'The following file does not exist: {file}')
+        print('The following file does not exist: {0}'.format(file))
 
 
 def load_confusion_matrix(predictions, labels):
